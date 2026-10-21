@@ -81,3 +81,96 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+/* ========================================
+   CLICK-TO-ENLARGE IMAGE LIGHTBOX
+======================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+  const lightbox = document.getElementById("image-lightbox");
+  const lightboxImage = document.getElementById("lightbox-image");
+  const lightboxCaption = document.getElementById("lightbox-caption");
+  const closeButton = document.getElementById("lightbox-close");
+
+  if (!lightbox || !lightboxImage || !closeButton) return;
+
+  let previouslyFocusedElement = null;
+
+  // Enable the lightbox for valid images across the portfolio.
+  document.querySelectorAll("img").forEach((img) => {
+    if (!img.getAttribute("src")) return;
+
+    img.classList.add("lightbox-enabled");
+    img.setAttribute("tabindex", "0");
+    img.setAttribute("role", "button");
+
+    if (!img.hasAttribute("aria-label")) {
+      img.setAttribute(
+        "aria-label",
+        `Open full-size image: ${img.alt || "Portfolio image"}`
+      );
+    }
+
+    img.addEventListener("click", () => openLightbox(img));
+
+    img.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openLightbox(img);
+      }
+    });
+  });
+
+  function openLightbox(img) {
+    // Ignore empty or broken image sources.
+    if (!img.complete || img.naturalWidth === 0) return;
+
+    previouslyFocusedElement = document.activeElement;
+
+    // Use the original image source, not its cropped thumbnail.
+    lightboxImage.src = img.currentSrc || img.src;
+    lightboxImage.alt = img.alt || "Full-size portfolio image";
+    lightboxCaption.textContent = img.alt || "";
+
+    lightbox.classList.add("active");
+    lightbox.setAttribute("aria-hidden", "false");
+    document.body.classList.add("lightbox-open");
+
+    closeButton.focus();
+  }
+
+  function closeLightbox() {
+    if (!lightbox.classList.contains("active")) return;
+
+    lightbox.classList.remove("active");
+    lightbox.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("lightbox-open");
+
+    lightboxImage.removeAttribute("src");
+    lightboxImage.alt = "";
+    lightboxCaption.textContent = "";
+
+    if (previouslyFocusedElement) {
+      previouslyFocusedElement.focus();
+    }
+  }
+
+  closeButton.addEventListener("click", closeLightbox);
+
+  // Close when clicking the dark overlay, but not the image itself.
+  lightbox.addEventListener("click", (event) => {
+    if (event.target === lightbox) {
+      closeLightbox();
+    }
+  });
+
+  // Close using the Escape key.
+  document.addEventListener("keydown", (event) => {
+    if (
+      event.key === "Escape" &&
+      lightbox.classList.contains("active")
+    ) {
+      closeLightbox();
+    }
+  });
+});
